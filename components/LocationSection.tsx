@@ -33,7 +33,7 @@ export default function LocationSection() {
       {/* 지도 이미지 영역 - 직접 캡처한 로컬 이미지 사용 */}
       <div 
         className="w-full aspect-video rounded-lg border border-accent/10 overflow-hidden shadow-md cursor-pointer relative group bg-secondary/5"
-        onClick={() => openMap("kakao")}
+        onClick={() => openMap("naver")}
       >
         <img 
           src="/map.png" 
@@ -47,8 +47,8 @@ export default function LocationSection() {
       </div>
 
       <div className="flex justify-center space-x-3">
-        <button onClick={() => openMap("kakao")} className="flex-1 max-w-[100px] py-2.5 border border-accent/20 rounded-lg text-[11px] text-primary/80 font-sans">카카오맵</button>
         <button onClick={() => openMap("naver")} className="flex-1 max-w-[100px] py-2.5 border border-accent/20 rounded-lg text-[11px] text-primary/80 font-sans">네이버지도</button>
+        <button onClick={() => openMap("kakao")} className="flex-1 max-w-[100px] py-2.5 border border-accent/20 rounded-lg text-[11px] text-primary/80 font-sans">카카오맵</button>
       </div>
 
       <div className="text-left space-y-6 pt-8 border-t border-accent/5">
