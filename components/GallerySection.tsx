@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 
 export default function GallerySection() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const images = [
     "/gallery/KakaoTalk_20260509_132113209.jpg",
@@ -14,17 +15,57 @@ export default function GallerySection() {
     "/gallery/KakaoTalk_20260509_132113209_04.jpg",
   ];
 
+  const isInitialOpen = useRef(true);
+
+  // 모달이 열릴 때 선택된 이미지로 스크롤
+  useEffect(() => {
+    if (selectedIndex === null) {
+      isInitialOpen.current = true;
+      return;
+    }
+
+    if (isInitialOpen.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const targetElement = container.children[selectedIndex] as HTMLElement;
+      if (targetElement) {
+        container.scrollTo({
+          left: targetElement.offsetLeft,
+          behavior: "instant",
+        });
+        isInitialOpen.current = false;
+      }
+    }
+  }, [selectedIndex]);
+
   const handleNext = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (selectedIndex !== null) {
-      setSelectedIndex((selectedIndex + 1) % images.length);
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const nextIndex = ((selectedIndex ?? 0) + 1) % images.length;
+      const targetElement = container.children[nextIndex] as HTMLElement;
+      container.scrollTo({ left: targetElement.offsetLeft, behavior: "smooth" });
+      setSelectedIndex(nextIndex);
     }
   };
 
   const handlePrev = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (selectedIndex !== null) {
-      setSelectedIndex((selectedIndex - 1 + images.length) % images.length);
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const prevIndex = ((selectedIndex ?? 0) - 1 + images.length) % images.length;
+      const targetElement = container.children[prevIndex] as HTMLElement;
+      container.scrollTo({ left: targetElement.offsetLeft, behavior: "smooth" });
+      setSelectedIndex(prevIndex);
+    }
+  };
+
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      const container = scrollRef.current;
+      const index = Math.round(container.scrollLeft / container.clientWidth);
+      if (index !== selectedIndex) {
+        setSelectedIndex(index);
+      }
     }
   };
 
@@ -62,33 +103,50 @@ export default function GallerySection() {
         })}
       </div>
 
-      {/* 사진 확대 모달 (슬라이드 기능 포함) */}
+      {/* 사진 확대 모달 (터치 슬라이드 기능 포함) */}
       {selectedIndex !== null && (
         <div 
           className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center backdrop-blur-md"
           onClick={() => setSelectedIndex(null)}
         >
-          {/* 이전 버튼 */}
+          {/* 이전 버튼 (PC용) */}
           <button 
-            className="absolute left-4 md:left-8 z-[110] text-white/50 hover:text-white text-4xl p-4 transition-colors"
+            className="hidden md:block absolute left-4 md:left-8 z-[110] text-white/50 hover:text-white text-4xl p-4 transition-colors"
             onClick={handlePrev}
           >
             &#10094;
           </button>
 
-          <div className="relative w-full max-w-4xl h-[80vh] flex items-center justify-center p-4">
-            <Image
-              src={images[selectedIndex]}
-              alt={`Wedding Gallery ${selectedIndex + 1}`}
-              fill
-              className="object-contain transition-all duration-500"
-              quality={100}
-            />
+          {/* 슬라이드 컨테이너 */}
+          <div 
+            ref={scrollRef}
+            className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+            onScroll={handleScroll}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {images.map((src, index) => (
+              <div 
+                key={index} 
+                className="min-w-full h-full flex items-center justify-center snap-center p-4"
+                onClick={() => setSelectedIndex(null)}
+              >
+                <div className="relative w-full max-w-4xl h-[80vh]">
+                  <Image
+                    src={src}
+                    alt={`Wedding Gallery ${index + 1}`}
+                    fill
+                    className="object-contain"
+                    quality={100}
+                    priority={index === selectedIndex}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* 다음 버튼 */}
+          {/* 다음 버튼 (PC용) */}
           <button 
-            className="absolute right-4 md:right-8 z-[110] text-white/50 hover:text-white text-4xl p-4 transition-colors"
+            className="hidden md:block absolute right-4 md:right-8 z-[110] text-white/50 hover:text-white text-4xl p-4 transition-colors"
             onClick={handleNext}
           >
             &#10095;
@@ -103,7 +161,7 @@ export default function GallerySection() {
           </button>
 
           {/* 페이지 표시 (1 / 5) */}
-          <div className="absolute bottom-10 text-white/60 text-xs font-sans tracking-widest">
+          <div className="absolute bottom-10 text-white/60 text-xs font-sans tracking-widest pointer-events-none">
             {selectedIndex + 1} / {images.length}
           </div>
         </div>
@@ -111,3 +169,4 @@ export default function GallerySection() {
     </section>
   );
 }
+
