@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Gowun_Batang } from "next/font/google";
+import SecurityWrapper from "@/components/SecurityWrapper";
 import "./globals.css";
 
 const gowunBatang = Gowun_Batang({
@@ -38,7 +39,9 @@ export default function RootLayout({
       className={`${gowunBatang.variable} h-full antialiased`}
     >
       <body className="min-h-full font-serif">
-        {children}
+        <SecurityWrapper>
+          {children}
+        </SecurityWrapper>
       </body>
     </html>
   );
