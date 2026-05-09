@@ -1,68 +1,26 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-
-declare global {
-  interface Window {
-    kakao: any;
-  }
-}
+import React from "react";
+import { Map, MapMarker, useKakaoLoader } from "react-kakao-maps-sdk";
 
 export default function LocationSection() {
-  const mapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=f00df4c56eb295d97718b9b3e1621075&autoload=false`;
-    script.async = true;
-
-    const initMap = () => {
-      window.kakao.maps.load(() => {
-        if (!mapRef.current) return;
-
-        const container = mapRef.current;
-        const options = {
-          center: new window.kakao.maps.LatLng(35.548608, 129.139212),
-          level: 3,
-        };
-
-        const map = new window.kakao.maps.Map(container, options);
-
-        // 마커 생성
-        const markerPosition = new window.kakao.maps.LatLng(35.548608, 129.139212);
-        const marker = new window.kakao.maps.Marker({
-          position: markerPosition,
-        });
-        marker.setMap(map);
-
-        // 지도 타입 컨트롤 추가
-        const mapTypeControl = new window.kakao.maps.MapTypeControl();
-        map.addControl(mapTypeControl, window.kakao.maps.ControlPosition.TOPRIGHT);
-
-        // 줌 컨트롤 추가
-        const zoomControl = new window.kakao.maps.ZoomControl();
-        map.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
-      });
-    };
-
-    if (window.kakao && window.kakao.maps) {
-      initMap();
-    } else {
-      script.onload = initMap;
-      document.head.appendChild(script);
-    }
-  }, []);
+  const position = { lat: 35.548608, lng: 129.139212 };
+  
+  // 지도를 불러오는 로더입니다.
+  const { loading, error } = useKakaoLoader({
+    appkey: "f00df4c56eb295d97718b9b3e1621075", // 사용자님의 자바스크립트 키
+  });
 
   const openKakaoMap = () => {
-    window.open("https://map.kakao.com/link/map/더엠컨벤션,35.548608,129.139212", "_blank");
+    window.open(`https://map.kakao.com/link/map/더엠컨벤션,${position.lat},${position.lng}`, "_blank");
   };
 
   const openNaverMap = () => {
-    window.open("https://map.naver.com/v5/search/더엠컨벤션?c=129.139212,35.548608,15,0,0,0,dh", "_blank");
+    window.open(`https://map.naver.com/v5/search/더엠컨벤션?c=${position.lng},${position.lat},15,0,0,0,dh`, "_blank");
   };
 
   const openTMap = () => {
-    window.open("https://apis.openapi.sk.com/tmap/app/routes?name=더엠컨벤션&lat=35.548608&lon=129.139212", "_blank");
+    window.open(`https://apis.openapi.sk.com/tmap/app/routes?name=더엠컨벤션&lat=${position.lat}&lon=${position.lng}`, "_blank");
   };
 
   return (
@@ -79,10 +37,23 @@ export default function LocationSection() {
       </div>
 
       {/* Map Container */}
-      <div 
-        ref={mapRef}
-        className="w-full aspect-video bg-secondary/30 rounded-lg border border-accent/10"
-      >
+      <div className="w-full aspect-video rounded-lg border border-accent/10 overflow-hidden shadow-sm flex items-center justify-center bg-secondary/10">
+        {loading ? (
+          <p className="text-sm text-primary/40 animate-pulse">지도를 불러오는 중입니다...</p>
+        ) : error ? (
+          <div className="text-center p-4">
+            <p className="text-sm text-red-400">지도를 불러오지 못했습니다.</p>
+            <p className="text-[10px] text-primary/40 mt-1">카카오 개발자 센터의 '플랫폼' 설정을 확인해주세요.</p>
+          </div>
+        ) : (
+          <Map
+            center={position}
+            style={{ width: "100%", height: "100%" }}
+            level={3}
+          >
+            <MapMarker position={position} />
+          </Map>
+        )}
       </div>
 
       <div className="flex justify-center space-x-2">
