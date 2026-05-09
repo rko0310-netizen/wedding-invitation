@@ -1,6 +1,70 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useRef } from "react";
+
+declare global {
+  interface Window {
+    kakao: any;
+  }
+}
 
 export default function LocationSection() {
+  const mapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=f00df4c56eb295d97718b9b3e1621075&autoload=false`;
+    script.async = true;
+
+    const initMap = () => {
+      window.kakao.maps.load(() => {
+        if (!mapRef.current) return;
+
+        const container = mapRef.current;
+        const options = {
+          center: new window.kakao.maps.LatLng(35.548608, 129.139212),
+          level: 3,
+        };
+
+        const map = new window.kakao.maps.Map(container, options);
+
+        // 마커 생성
+        const markerPosition = new window.kakao.maps.LatLng(35.548608, 129.139212);
+        const marker = new window.kakao.maps.Marker({
+          position: markerPosition,
+        });
+        marker.setMap(map);
+
+        // 지도 타입 컨트롤 추가
+        const mapTypeControl = new window.kakao.maps.MapTypeControl();
+        map.addControl(mapTypeControl, window.kakao.maps.ControlPosition.TOPRIGHT);
+
+        // 줌 컨트롤 추가
+        const zoomControl = new window.kakao.maps.ZoomControl();
+        map.addControl(zoomControl, window.kakao.maps.ControlPosition.RIGHT);
+      });
+    };
+
+    if (window.kakao && window.kakao.maps) {
+      initMap();
+    } else {
+      script.onload = initMap;
+      document.head.appendChild(script);
+    }
+  }, []);
+
+  const openKakaoMap = () => {
+    window.open("https://map.kakao.com/link/map/더엠컨벤션,35.548608,129.139212", "_blank");
+  };
+
+  const openNaverMap = () => {
+    window.open("https://map.naver.com/v5/search/더엠컨벤션?c=129.139212,35.548608,15,0,0,0,dh", "_blank");
+  };
+
+  const openTMap = () => {
+    window.open("https://apis.openapi.sk.com/tmap/app/routes?name=더엠컨벤션&lat=35.548608&lon=129.139212", "_blank");
+  };
+
   return (
     <section className="py-20 px-8 text-center space-y-12 bg-white">
       <div className="space-y-6">
@@ -14,22 +78,30 @@ export default function LocationSection() {
         <p className="text-foreground/70 font-light">0507-1469-5501</p>
       </div>
 
-      {/* Map Placeholder */}
-      <div className="w-full aspect-video bg-secondary/30 rounded-lg flex items-center justify-center border border-accent/10">
-        <div className="text-center">
-          <p className="text-primary/60 text-sm mb-2">지도가 표시될 영역입니다.</p>
-          <p className="text-[10px] text-primary/40">(Kakao/Naver Map API 연동 필요)</p>
-        </div>
+      {/* Map Container */}
+      <div 
+        ref={mapRef}
+        className="w-full aspect-video bg-secondary/30 rounded-lg border border-accent/10"
+      >
       </div>
 
       <div className="flex justify-center space-x-2">
-        <button className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors">
+        <button 
+          onClick={openKakaoMap}
+          className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors"
+        >
           카카오맵
         </button>
-        <button className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors">
+        <button 
+          onClick={openNaverMap}
+          className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors"
+        >
           네이버지도
         </button>
-        <button className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors">
+        <button 
+          onClick={openTMap}
+          className="px-4 py-2 border border-accent/20 rounded-full text-xs text-primary/80 hover:bg-secondary transition-colors"
+        >
           T맵
         </button>
       </div>

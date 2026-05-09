@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Serif_KR, Inter } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const notoSerifKR = Noto_Serif_KR({
@@ -42,7 +43,13 @@ export default function RootLayout({
       lang="ko"
       className={`${notoSerifKR.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-serif">{children}</body>
+      <body className="min-h-full font-serif">
+        {children}
+        <Script
+          src="//dapi.kakao.com/v2/maps/sdk.js?appkey=f00df4c56eb295d97718b9b3e1621075&autoload=false"
+          strategy="beforeInteractive"
+        />
+      </body>
     </html>
   );
 }
