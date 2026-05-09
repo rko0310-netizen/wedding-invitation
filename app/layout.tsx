@@ -45,10 +45,6 @@ export default function RootLayout({
     >
       <body className="min-h-full font-serif">
         {children}
-        <Script
-          src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=f00df4c56eb295d97718b9b3e1621075&autoload=false`}
-          strategy="beforeInteractive"
-        />
       </body>
     </html>
   );
