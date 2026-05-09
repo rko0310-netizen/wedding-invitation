@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Noto_Serif_KR, Inter } from "next/font/google";
-import Script from "next/script";
+import { Gowun_Batang } from "next/font/google";
 import "./globals.css";
 
-const notoSerifKR = Noto_Serif_KR({
-  variable: "--font-noto-serif-kr",
+const gowunBatang = Gowun_Batang({
+  variable: "--font-gowun-batang",
   subsets: ["latin"],
-  weight: ["200", "300", "400", "500", "600", "700", "900"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +35,7 @@ export default function RootLayout({
   return (
     <html
       lang="ko"
-      className={`${notoSerifKR.variable} ${inter.variable} h-full antialiased`}
+      className={`${gowunBatang.variable} h-full antialiased`}
     >
       <body className="min-h-full font-serif">
         {children}
