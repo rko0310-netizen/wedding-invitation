@@ -13,7 +13,7 @@ function getDriveClient() {
     throw new Error(`Missing env: email=${!!email}, key=${!!rawKey}, folderId=${!!folderId}`);
   }
 
-  const key = rawKey.replace(/\\n/g, '\n');
+  const key = rawKey.includes('\\n') ? rawKey.replace(/\\n/g, '\n') : rawKey;
   const auth = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive'] });
   return { drive: google.drive({ version: 'v3', auth }), folderId };
 }
