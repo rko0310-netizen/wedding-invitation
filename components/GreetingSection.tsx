@@ -30,7 +30,7 @@ export default function GreetingSection() {
             </div>
           </div>
           <p className="text-sm text-primary/60 pt-4">이문규 · 노경옥 의 장남 이정훈</p>
-          <p className="text-sm text-primary/60"> 이금자 의 장녀 윤희원</p>
+          <p className="text-sm text-primary/60"> 윤영식 · 이금자 의 장녀 윤희원</p>
         </div>
       </div>
     </section>
