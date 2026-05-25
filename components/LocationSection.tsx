@@ -60,7 +60,7 @@ export default function LocationSection() {
             <span className="w-1.5 h-1.5 bg-accent rounded-full mr-2"></span>
             오시는 길
           </h4>
-          <p className="text-sm text-foreground/70 font-light">울산역(통도사) 1번 출구 도보 5분</p>
+          <p className="text-sm text-foreground/70 font-light">울산역(통도사) 3번 출구 도보 3분</p>
         </div>
       </div>
     </section>

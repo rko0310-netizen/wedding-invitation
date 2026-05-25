@@ -15,6 +15,7 @@ export default function GallerySection() {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [guestPhotos, setGuestPhotos] = useState<GuestPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -107,34 +108,78 @@ export default function GallerySection() {
     }
   };
 
+  const compressImage = (file: File): Promise<File> =>
+    new Promise((resolve) => {
+      const img = document.createElement("img");
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1920;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
+          else { width = Math.round((width * MAX) / height); height = MAX; }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => resolve(blob
+            ? new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
+            : file
+          ),
+          "image/jpeg", 0.85
+        );
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const file = formData.get("file") as File;
+    const raw = new FormData(e.currentTarget);
+    const files = (e.currentTarget.querySelector('input[name="file"]') as HTMLInputElement).files;
+    const uploaderName = raw.get("uploader_name") as string;
 
-    if (file && file.size > 20 * 1024 * 1024) {
-      alert("파일 용량은 20MB를 초과할 수 없습니다.");
+    if (!files || files.length === 0) return;
+
+    const oversized = Array.from(files).find(f => f.size > 20 * 1024 * 1024);
+    if (oversized) {
+      alert(`"${oversized.name}" 파일이 20MB를 초과합니다.`);
       return;
     }
-    
+
     setIsUploading(true);
+    let failCount = 0;
+
     try {
-      const res = await fetch("/api/photos", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        alert("사진이 성공적으로 업로드되었습니다!");
-        setShowUploadModal(false);
-        fetchGuestPhotos();
-      } else {
-        alert(data.error || "업로드에 실패했습니다.");
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress(`${i + 1} / ${files.length} 업로드 중...`);
+        try {
+          const compressed = await compressImage(files[i]);
+          const formData = new FormData();
+          formData.append("file", compressed);
+          formData.append("uploader_name", uploaderName);
+
+          const res = await fetch("/api/photos", { method: "POST", body: formData });
+          if (!res.ok) failCount++;
+        } catch {
+          failCount++;
+        }
       }
-    } catch (err) {
-      alert("네트워크 오류가 발생했습니다.");
+
+      if (failCount === 0) {
+        alert(`${files.length}장이 성공적으로 업로드되었습니다!`);
+      } else {
+        alert(`${files.length - failCount}장 성공, ${failCount}장 실패했습니다.`);
+      }
+      setShowUploadModal(false);
+      fetchGuestPhotos();
     } finally {
       setIsUploading(false);
+      setUploadProgress("");
     }
   };
 
@@ -242,11 +287,12 @@ export default function GallerySection() {
             <form onSubmit={handleUpload} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] uppercase tracking-wider text-primary/40 ml-1">사진 선택</label>
-                <input 
-                  type="file" 
-                  name="file" 
-                  accept="image/*" 
-                  required 
+                <input
+                  type="file"
+                  name="file"
+                  accept="image/*"
+                  multiple
+                  required
                   className="w-full text-xs border border-secondary p-2 rounded-lg"
                 />
               </div>
@@ -273,7 +319,7 @@ export default function GallerySection() {
                   disabled={isUploading}
                   className="flex-1 py-3 bg-accent text-white text-xs rounded-lg hover:bg-accent/90 disabled:bg-accent/50 transition-colors"
                 >
-                  {isUploading ? "업로드 중..." : "등록하기"}
+                  {isUploading ? (uploadProgress || "업로드 중...") : "등록하기"}
                 </button>
               </div>
             </form>
