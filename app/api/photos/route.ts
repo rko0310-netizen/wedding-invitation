@@ -5,16 +5,17 @@ import { Readable } from 'stream';
 export const dynamic = 'force-dynamic';
 
 function getDriveClient() {
-  const email = process.env.GOOGLE_CLIENT_EMAIL;
-  const rawKey = process.env.GOOGLE_PRIVATE_KEY;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
   const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-  if (!email || !rawKey || !folderId) {
-    throw new Error(`Missing env: email=${!!email}, key=${!!rawKey}, folderId=${!!folderId}`);
+  if (!clientId || !clientSecret || !refreshToken || !folderId) {
+    throw new Error(`Missing env: clientId=${!!clientId}, clientSecret=${!!clientSecret}, refreshToken=${!!refreshToken}, folderId=${!!folderId}`);
   }
 
-  const key = rawKey.includes('\\n') ? rawKey.replace(/\\n/g, '\n') : rawKey;
-  const auth = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive'] });
+  const auth = new google.auth.OAuth2(clientId, clientSecret);
+  auth.setCredentials({ refresh_token: refreshToken });
   return { drive: google.drive({ version: 'v3', auth }), folderId };
 }
 
@@ -71,9 +72,7 @@ export async function POST(req: NextRequest) {
 
     // Google Drive에 파일 업로드
     const buffer = Buffer.from(await file.arrayBuffer());
-    const stream = new Readable();
-    stream.push(buffer);
-    stream.push(null);
+    const stream = Readable.from(buffer);
 
     const driveResponse = await drive.files.create({
       requestBody: {
