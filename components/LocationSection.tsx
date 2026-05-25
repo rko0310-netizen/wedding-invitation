@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 
 export default function LocationSection() {
   const lat = 35.548608;
@@ -31,14 +32,16 @@ export default function LocationSection() {
       </div>
 
       {/* 지도 이미지 영역 - 직접 캡처한 로컬 이미지 사용 */}
-      <div 
+      <div
         className="w-full aspect-video rounded-lg border border-accent/10 overflow-hidden shadow-md cursor-pointer relative group bg-secondary/5"
         onClick={() => openMap("naver")}
       >
-        <img 
-          src="/map.png" 
-          alt="더엠컨벤션 지도" 
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        <Image
+          src="/map.png"
+          alt="더엠컨벤션 지도"
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 500px) 100vw, 500px"
         />
         <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
         <div className="absolute bottom-4 right-4 bg-white/90 px-3 py-1.5 rounded-full shadow-sm text-[10px] text-primary/70 font-sans backdrop-blur-sm z-30">

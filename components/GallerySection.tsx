@@ -16,6 +16,7 @@ export default function GallerySection() {
   const [guestPhotos, setGuestPhotos] = useState<GuestPhoto[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const weddingImages = [
@@ -32,6 +33,7 @@ export default function GallerySection() {
 
   // 하객 사진 불러오기
   const fetchGuestPhotos = async () => {
+    setIsLoadingPhotos(true);
     try {
       const res = await fetch("/api/photos");
       const data = await res.json();
@@ -40,6 +42,8 @@ export default function GallerySection() {
       }
     } catch (err) {
       console.error("Failed to fetch photos", err);
+    } finally {
+      setIsLoadingPhotos(false);
     }
   };
 
@@ -184,7 +188,11 @@ export default function GallerySection() {
       ) : (
         <div className="space-y-6">
           <div className="grid grid-cols-3 gap-1 md:gap-2">
-            {guestPhotos.length > 0 ? (
+            {isLoadingPhotos ? (
+              <div className="col-span-3 py-20 text-center text-primary/40 text-xs">
+                불러오는 중...
+              </div>
+            ) : guestPhotos.length > 0 ? (
               guestPhotos.map((photo, index) => (
                 <div 
                   key={photo.id} 
@@ -223,8 +231,8 @@ export default function GallerySection() {
 
       {/* 사진 업로드 모달 */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-sm rounded-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setShowUploadModal(false)}>
+          <div className="bg-white w-full max-w-sm rounded-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
               <h3 className="text-lg font-medium text-primary">하객 스냅 올리기</h3>
               <p className="text-[10px] text-primary/60">오늘의 소중한 순간을 함께 공유해주세요. (최대 20MB)</p>

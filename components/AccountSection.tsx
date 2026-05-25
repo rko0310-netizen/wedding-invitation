@@ -14,7 +14,6 @@ const AccountItem = ({ side, name, bank, account }: AccountProps) => {
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log(`Copying ${side} account...`);
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(account);
@@ -61,12 +60,7 @@ export default function AccountSection() {
   const brideRef = useRef<HTMLDivElement>(null);
 
   const toggleAccordion = (side: string) => {
-    console.log(`Toggle clicked for: ${side}`);
-    setOpenSide(prev => {
-      const next = prev === side ? null : side;
-      console.log(`Setting openSide to: ${next}`);
-      return next;
-    });
+    setOpenSide(prev => prev === side ? null : side);
   };
 
   useEffect(() => {

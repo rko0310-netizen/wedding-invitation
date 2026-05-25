@@ -5,12 +5,11 @@ import { Readable } from 'stream';
 export const dynamic = 'force-dynamic';
 
 // 구글 드라이브 인증 설정
-const auth = new google.auth.JWT(
-  process.env.GOOGLE_CLIENT_EMAIL,
-  null,
-  process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly']
-);
+const auth = new google.auth.JWT({
+  email: process.env.GOOGLE_CLIENT_EMAIL,
+  key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly'],
+});
 
 const drive = google.drive({ version: 'v3', auth });
 
@@ -38,7 +37,7 @@ export async function GET() {
     return NextResponse.json(photos);
   } catch (error: any) {
     console.error('Fetch error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: '사진을 불러오는데 실패했습니다.' }, { status: 500 });
   }
 }
 
@@ -58,10 +57,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '파일이 없습니다.' }, { status: 400 });
     }
 
-    // 2. 파일 확장자 및 용량 검증
+    // 2. 파일 확장자 및 MIME 타입, 용량 검증
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
-    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
+    if (!fileExtension || !allowedExtensions.includes(fileExtension) || !allowedMimeTypes.includes(file.type)) {
       return NextResponse.json({ error: '허용되지 않는 파일 형식입니다.' }, { status: 400 });
     }
 
@@ -106,6 +106,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: '성공적으로 업로드되었습니다.', url: publicUrl });
   } catch (error: any) {
     console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: '업로드 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }

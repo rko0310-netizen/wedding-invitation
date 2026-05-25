@@ -2,8 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 
+const WEDDING_DATE = new Date("2026-09-12T13:30:00").getTime();
+
 export default function HeroSection() {
-  const weddingDate = new Date("2026-09-12T13:30:00").getTime();
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
     hours: 0,
@@ -14,7 +15,7 @@ export default function HeroSection() {
   useEffect(() => {
     const timer = setInterval(() => {
       const now = new Date().getTime();
-      const distance = weddingDate - now;
+      const distance = WEDDING_DATE - now;
 
       if (distance < 0) {
         clearInterval(timer);
@@ -29,7 +30,7 @@ export default function HeroSection() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [weddingDate]);
+  }, []);
 
   return (
     <section className="relative h-screen min-h-[600px] flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-secondary">
