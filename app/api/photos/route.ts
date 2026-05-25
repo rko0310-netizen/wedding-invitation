@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 
@@ -10,22 +9,35 @@ const auth = new google.auth.JWT(
   process.env.GOOGLE_CLIENT_EMAIL,
   null,
   process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  ['https://www.googleapis.com/auth/drive.file']
+  ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly']
 );
 
 const drive = google.drive({ version: 'v3', auth });
 
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from('guest_photos')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    
+    // 구글 드라이브 폴더 내 파일 목록 조회
+    const response = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false`,
+      fields: 'files(id, name, description, createdTime)',
+      orderBy: 'createdTime desc',
+    });
 
-    if (error) throw error;
+    const files = response.data.files || [];
 
-    return NextResponse.json(data);
+    // 프론트엔드에서 기대하는 형식으로 변환
+    const photos = files.map(file => ({
+      id: file.id,
+      image_url: `https://drive.google.com/uc?export=view&id=${file.id}`,
+      uploader_name: file.description || '익명의 하객',
+      created_at: file.createdTime
+    }));
+
+    return NextResponse.json(photos);
   } catch (error: any) {
+    console.error('Fetch error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -66,6 +78,7 @@ export async function POST(req: NextRequest) {
     const driveResponse = await drive.files.create({
       requestBody: {
         name: `${Date.now()}-${file.name}`,
+        description: uploaderName || '익명의 하객', // 하객 이름을 파일 설명에 저장
         parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
       },
       media: {
@@ -88,21 +101,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 5. 직접 접근 가능한 이미지 URL 생성
-    // 구글 드라이브의 직접 링크 포맷 중 하나를 사용합니다.
     const publicUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-
-    // 6. DB에 메타데이터 저장
-    const { error: dbError } = await supabaseAdmin
-      .from('guest_photos')
-      .insert([
-        { 
-          image_url: publicUrl, 
-          uploader_name: uploaderName || '익명의 하객'
-        }
-      ]);
-
-    if (dbError) throw dbError;
 
     return NextResponse.json({ message: '성공적으로 업로드되었습니다.', url: publicUrl });
   } catch (error: any) {
