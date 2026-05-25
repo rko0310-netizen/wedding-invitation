@@ -106,6 +106,12 @@ export default function GallerySection() {
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
+    const file = formData.get("file") as File;
+
+    if (file && file.size > 20 * 1024 * 1024) {
+      alert("파일 용량은 20MB를 초과할 수 없습니다.");
+      return;
+    }
     
     setIsUploading(true);
     try {
@@ -221,7 +227,7 @@ export default function GallerySection() {
           <div className="bg-white w-full max-w-sm rounded-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-300">
             <div className="text-center space-y-2">
               <h3 className="text-lg font-medium text-primary">하객 스냅 올리기</h3>
-              <p className="text-[10px] text-primary/60">오늘의 소중한 순간을 함께 공유해주세요.</p>
+              <p className="text-[10px] text-primary/60">오늘의 소중한 순간을 함께 공유해주세요. (최대 20MB)</p>
             </div>
             
             <form onSubmit={handleUpload} className="space-y-4">

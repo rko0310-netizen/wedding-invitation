@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '허용되지 않는 파일 형식입니다.' }, { status: 400 });
     }
 
-    if (file.size > 10 * 1024 * 1024) { // 10MB
-      return NextResponse.json({ error: '파일 용량은 10MB를 초과할 수 없습니다.' }, { status: 400 });
+    if (file.size > 20 * 1024 * 1024) { // 20MB
+      return NextResponse.json({ error: '파일 용량은 20MB를 초과할 수 없습니다.' }, { status: 400 });
     }
 
     // 3. Supabase Storage에 파일 업로드
