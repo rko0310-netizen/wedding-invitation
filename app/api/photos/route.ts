@@ -4,20 +4,24 @@ import { Readable } from 'stream';
 
 export const dynamic = 'force-dynamic';
 
-// 구글 드라이브 인증 설정
-const auth = new google.auth.JWT({
-  email: process.env.GOOGLE_CLIENT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  scopes: ['https://www.googleapis.com/auth/drive'],
-});
+function getDriveClient() {
+  const email = process.env.GOOGLE_CLIENT_EMAIL;
+  const rawKey = process.env.GOOGLE_PRIVATE_KEY;
+  const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
 
-const drive = google.drive({ version: 'v3', auth });
+  if (!email || !rawKey || !folderId) {
+    throw new Error(`Missing env: email=${!!email}, key=${!!rawKey}, folderId=${!!folderId}`);
+  }
+
+  const key = rawKey.replace(/\\n/g, '\n');
+  const auth = new google.auth.JWT({ email, key, scopes: ['https://www.googleapis.com/auth/drive'] });
+  return { drive: google.drive({ version: 'v3', auth }), folderId };
+}
 
 export async function GET() {
   try {
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-    
-    // 구글 드라이브 폴더 내 파일 목록 조회
+    const { drive, folderId } = getDriveClient();
+
     const response = await drive.files.list({
       q: `'${folderId}' in parents and trashed = false`,
       fields: 'files(id, name, description, createdTime)',
@@ -43,6 +47,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const { drive, folderId } = getDriveClient();
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const uploaderName = formData.get('uploader_name') as string;
@@ -51,7 +57,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '파일이 없습니다.' }, { status: 400 });
     }
 
-    // 2. 파일 확장자 및 MIME 타입, 용량 검증
+    // 파일 확장자 및 MIME 타입, 용량 검증
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
@@ -59,11 +65,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '허용되지 않는 파일 형식입니다.' }, { status: 400 });
     }
 
-    if (file.size > 20 * 1024 * 1024) { // 20MB
+    if (file.size > 20 * 1024 * 1024) {
       return NextResponse.json({ error: '파일 용량은 20MB를 초과할 수 없습니다.' }, { status: 400 });
     }
 
-    // 3. Google Drive에 파일 업로드
+    // Google Drive에 파일 업로드
     const buffer = Buffer.from(await file.arrayBuffer());
     const stream = new Readable();
     stream.push(buffer);
@@ -72,8 +78,8 @@ export async function POST(req: NextRequest) {
     const driveResponse = await drive.files.create({
       requestBody: {
         name: `${Date.now()}-${file.name}`,
-        description: uploaderName || '익명의 하객', // 하객 이름을 파일 설명에 저장
-        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
+        description: uploaderName || '익명의 하객',
+        parents: [folderId],
       },
       media: {
         mimeType: file.type,
