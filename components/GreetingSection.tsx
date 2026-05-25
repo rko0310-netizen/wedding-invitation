@@ -10,11 +10,11 @@ export default function GreetingSection() {
       
       <div className="space-y-8">
         <p className="leading-loose text-foreground/80 font-light break-keep">
-          오랜 시간 마주보며 다져온 사랑을<br />
-          이제 함께 한 곳을 바라보며 걸어가고자 합니다.<br /><br />
-          저희 두 사람이 사랑의 이름으로<br />
-          지키고 가꾸어 나갈 약속의 자리에<br />
-          함께하시어 축복해 주시면 감사하겠습니다.
+          웃음으로 시작한 우정이<br />
+          서서히 따스함을 품고.<br /><br />
+          서로의 하루에 스며들었습니다。<br /><br />
+          그 마을이 사랑이 되었고、<br />
+          이제는 부부로서 같은 길을 걸으려 합니다.
         </p>
 
         <div className="pt-8 space-y-4">
