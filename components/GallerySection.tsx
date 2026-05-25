@@ -166,7 +166,7 @@ export default function GallerySection() {
             onClick={() => setShowUploadModal(true)}
             className="px-5 py-2 border border-accent text-accent text-[11px] tracking-widest rounded-full hover:bg-accent hover:text-white transition-colors"
           >
-            사진 올리기
+            추억을 남겨주세요.
           </button>
         </div>
       </div>
@@ -236,7 +236,7 @@ export default function GallerySection() {
           <div className="bg-white w-full max-w-sm rounded-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
               <h3 className="text-lg font-medium text-primary">하객 스냅 올리기</h3>
-              <p className="text-[10px] text-primary/60">오늘의 소중한 순간을 함께 공유해주세요. (최대 20MB)</p>
+              <p className="text-[10px] text-primary/60">소중한 추억을 직접 남겨주세요.</p>
             </div>
             
             <form onSubmit={handleUpload} className="space-y-4">
@@ -260,17 +260,6 @@ export default function GallerySection() {
                   className="w-full text-xs border border-secondary p-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-wider text-primary/40 ml-1">업로드 암호</label>
-                <input 
-                  type="password" 
-                  name="password" 
-                  placeholder="신랑 또는 신부 이름"
-                  required 
-                  className="w-full text-xs border border-secondary p-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent"
-                />
-              </div>
-              
               <div className="pt-4 flex gap-2">
                 <button 
                   type="button"

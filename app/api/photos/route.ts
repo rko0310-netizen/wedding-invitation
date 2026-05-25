@@ -46,12 +46,6 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get('file') as File;
     const uploaderName = formData.get('uploader_name') as string;
-    const password = formData.get('password') as string;
-
-    // 1. 비밀번호 검증
-    if (password !== process.env.UPLOAD_PASSWORD) {
-      return NextResponse.json({ error: '비밀번호가 일치하지 않습니다.' }, { status: 401 });
-    }
 
     if (!file) {
       return NextResponse.json({ error: '파일이 없습니다.' }, { status: 400 });
