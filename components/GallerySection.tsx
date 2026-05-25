@@ -145,18 +145,28 @@ export default function GallerySection() {
         <div className="w-8 h-[1px] bg-accent/30 mx-auto"></div>
         
         {/* 탭 네비게이션 */}
-        <div className="flex justify-center gap-8 text-sm pt-4">
-          <button 
+        <div className="flex items-center justify-center gap-8 text-sm pt-4">
+          <button
             onClick={() => setActiveTab("wedding")}
             className={`pb-2 transition-all ${activeTab === "wedding" ? "text-accent border-b border-accent" : "text-primary/40"}`}
           >
             우리의 사진
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab("guests")}
             className={`pb-2 transition-all ${activeTab === "guests" ? "text-accent border-b border-accent" : "text-primary/40"}`}
           >
             하객의 시선
+          </button>
+        </div>
+
+        {/* 사진 올리기 버튼 — 항상 표시 */}
+        <div className="pt-2">
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="px-5 py-2 border border-accent text-accent text-[11px] tracking-widest rounded-full hover:bg-accent hover:text-white transition-colors"
+          >
+            사진 올리기
           </button>
         </div>
       </div>
@@ -216,15 +226,6 @@ export default function GallerySection() {
                 아직 등록된 사진이 없습니다. 첫 번째 사진을 올려보세요!
               </div>
             )}
-          </div>
-          
-          <div className="flex justify-center">
-            <button 
-              onClick={() => setShowUploadModal(true)}
-              className="px-6 py-3 bg-accent text-white text-xs tracking-widest rounded-full hover:bg-accent/80 transition-colors shadow-lg"
-            >
-              사진 올리기
-            </button>
           </div>
         </div>
       )}
