@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { v4 as uuidv4 } from 'uuid';
+import { google } from 'googleapis';
+import { Readable } from 'stream';
 
 export const dynamic = 'force-dynamic';
+
+// 구글 드라이브 인증 설정
+const auth = new google.auth.JWT(
+  process.env.GOOGLE_CLIENT_EMAIL,
+  null,
+  process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  ['https://www.googleapis.com/auth/drive.file']
+);
+
+const drive = google.drive({ version: 'v3', auth });
 
 export async function GET() {
   try {
@@ -35,7 +46,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '파일이 없습니다.' }, { status: 400 });
     }
 
-    // 2. 파일 확장자 및 용량 검증 (서버사이드)
+    // 2. 파일 확장자 및 용량 검증
     const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
     const fileExtension = file.name.split('.').pop()?.toLowerCase();
     if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
@@ -46,23 +57,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '파일 용량은 20MB를 초과할 수 없습니다.' }, { status: 400 });
     }
 
-    // 3. Supabase Storage에 파일 업로드
-    const fileName = `${uuidv4()}.${fileExtension}`;
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
-      .from('guest_photos')
-      .upload(fileName, file, {
-        contentType: file.type,
-        upsert: false
-      });
+    // 3. Google Drive에 파일 업로드
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
 
-    if (uploadError) throw uploadError;
+    const driveResponse = await drive.files.create({
+      requestBody: {
+        name: `${Date.now()}-${file.name}`,
+        parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
+      },
+      media: {
+        mimeType: file.type,
+        body: stream,
+      },
+      fields: 'id',
+    });
 
-    // 4. 공개 URL 가져오기
-    const { data: { publicUrl } } = supabaseAdmin.storage
-      .from('guest_photos')
-      .getPublicUrl(fileName);
+    const fileId = driveResponse.data.id;
 
-    // 5. DB에 메타데이터 저장
+    if (!fileId) throw new Error('구글 드라이브 업로드에 실패했습니다.');
+
+    // 4. 파일 공개 권한 설정 (누구나 링크로 볼 수 있게)
+    await drive.permissions.create({
+      fileId: fileId,
+      requestBody: {
+        role: 'reader',
+        type: 'anyone',
+      },
+    });
+
+    // 5. 직접 접근 가능한 이미지 URL 생성
+    // 구글 드라이브의 직접 링크 포맷 중 하나를 사용합니다.
+    const publicUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
+
+    // 6. DB에 메타데이터 저장
     const { error: dbError } = await supabaseAdmin
       .from('guest_photos')
       .insert([
