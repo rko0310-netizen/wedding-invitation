@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 const auth = new google.auth.JWT({
   email: process.env.GOOGLE_CLIENT_EMAIL,
   key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly'],
+  scopes: ['https://www.googleapis.com/auth/drive'],
 });
 
 const drive = google.drive({ version: 'v3', auth });
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message: '성공적으로 업로드되었습니다.', url: publicUrl });
   } catch (error: any) {
-    console.error('Upload error:', error);
+    console.error('Upload error:', error?.message ?? error);
     return NextResponse.json({ error: '업로드 중 오류가 발생했습니다.' }, { status: 500 });
   }
 }
