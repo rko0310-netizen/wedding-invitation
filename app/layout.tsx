@@ -19,10 +19,10 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     images: [
       {
-        url: "https://picsum.photos/id/237/800/600",
-        width: 800,
-        height: 600,
-        alt: "Wedding Invitation",
+        url: "/gallery/KakaoTalk_20260509_132113209_02.jpg",
+        width: 3150,
+        height: 4725,
+        alt: "정훈 & 희원 결혼식",
       },
     ],
   },

@@ -62,6 +62,14 @@ export default function LocationSection() {
           </h4>
           <p className="text-sm text-foreground/70 font-light">울산역(통도사) 3번 출구 도보 3분</p>
         </div>
+
+        <div className="space-y-2">
+          <h4 className="text-sm font-semibold text-primary flex items-center">
+            <span className="w-1.5 h-1.5 bg-accent rounded-full mr-2"></span>
+            주차 안내
+          </h4>
+          <p className="text-sm text-foreground/70 font-light">건물 지하 주차장을 이용하실 수 있으며, 혼잡 시 지상 주차장도 이용 가능합니다.</p>
+        </div>
       </div>
     </section>
   );

@@ -36,7 +36,7 @@ export default function HeroSection() {
     <section className="relative h-screen min-h-[600px] flex flex-col items-center justify-center text-center px-4 overflow-hidden bg-secondary">
       {/* Background Image Placeholder */}
       <div className="absolute inset-0 z-0 opacity-40">
-        <div className="w-full h-full bg-gradient-to-b from-accent/20 to-secondary flex items-center justify-center text-primary/10 text-9xl font-serif italic select-none">
+        <div className="w-full h-full bg-gradient-to-b from-accent/20 to-secondary flex items-center justify-center text-primary/10 text-7xl font-serif italic select-none">
           Wedding
         </div>
       </div>

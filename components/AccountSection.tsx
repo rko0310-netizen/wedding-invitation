@@ -89,7 +89,7 @@ export default function AccountSection() {
         {/* Groom's Side */}
         <div 
           ref={groomRef}
-          className="border border-accent/10 rounded-xl overflow-hidden bg-white shadow-sm relative z-10"
+          className="border border-accent/10 rounded-lg overflow-hidden bg-white shadow-sm relative z-10"
         >
           <button
             onClick={() => toggleAccordion("groom")}
@@ -109,8 +109,8 @@ export default function AccountSection() {
             } overflow-hidden`}
           >
             <div className="px-5 pb-6 space-y-3">
-              <AccountItem side="신랑" name="이정훈" bank="신한은행" account="110-123-456789" />
-              <AccountItem side="부친" name="이문규" bank="국민은행" account="123-45-678901" />
+              <AccountItem side="신랑" name="이정훈" bank="국민은행" account="120502-04-089910" />
+              <AccountItem side="모친" name="노경옥" bank="농협" account="104-02-053951" />
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function AccountSection() {
         {/* Bride's Side */}
         <div 
           ref={brideRef}
-          className="border border-accent/10 rounded-xl overflow-hidden bg-white shadow-sm relative z-10"
+          className="border border-accent/10 rounded-lg overflow-hidden bg-white shadow-sm relative z-10"
         >
           <button
             onClick={() => toggleAccordion("bride")}
@@ -138,8 +138,8 @@ export default function AccountSection() {
             } overflow-hidden`}
           >
             <div className="px-5 pb-6 space-y-3">
-              <AccountItem side="신부" name="윤희원" bank="우리은행" account="1002-123-456789" />
-              <AccountItem side="모친" name="이금자" bank="농협" account="302-1234-5678-91" />
+              <AccountItem side="신부" name="윤희원" bank="농협은행" account="815062-56-099595" />
+              <AccountItem side="모친" name="이금자" bank="농협" account="815062-56-045847" />
             </div>
           </div>
         </div>
