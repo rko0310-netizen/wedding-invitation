@@ -10,6 +10,7 @@ const gowunBatang = Gowun_Batang({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://wedding-invitation-neon-nine.vercel.app"),
   title: "9월 12일, 우리 결혼합니다",
   description: "9월 12일 토요일, 저희의 결혼식에 소중한 분들을 초대합니다.",
   openGraph: {
@@ -19,9 +20,9 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     images: [
       {
-        url: "/gallery/KakaoTalk_20260509_132113209_02.jpg",
-        width: 3150,
-        height: 4725,
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 1800,
         alt: "정훈 & 희원 결혼식",
       },
     ],
