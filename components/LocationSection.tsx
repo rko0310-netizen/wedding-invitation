@@ -68,7 +68,7 @@ export default function LocationSection() {
             <span className="w-1.5 h-1.5 bg-accent rounded-full mr-2"></span>
             주차 안내
           </h4>
-          <p className="text-sm text-foreground/70 font-light">건물 주차장은 지하 2층부터 지상 9층까지 이용 가능하오니,<br />혼잡 시 지상 주차장을 이용 부탁드립니다.</p>
+          <p className="text-sm text-foreground/70 font-light break-keep">건물 내 주차는 지하 2층부터 지상 8층까지 가능하오니,<br />지하주차장이 혼잡한 경우 지상 주차장을 이용 바랍니다.</p>
         </div>
       </div>
     </section>
