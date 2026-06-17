@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://wedding-invitation-neon-nine.vercel.app"),
   title: "9월 12일, 우리 결혼합니다",
   description: "9월 12일 토요일, 저희의 결혼식에 소중한 분들을 초대합니다.",
+  formatDetection: {
+    telephone: false,
+  },
   openGraph: {
     title: "정훈 & 희원 결혼식에 초대합니다",
     description: "2026년 9월 12일 토요일 오후 1시 30분, 더엠컨벤션",
@@ -20,7 +23,7 @@ export const metadata: Metadata = {
     locale: "ko_KR",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/og-image-v2.jpg",
         width: 1200,
         height: 1800,
         alt: "정훈 & 희원 결혼식",
