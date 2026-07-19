@@ -21,11 +21,28 @@ export default function GallerySection() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const weddingImages = [
-    "/gallery/KakaoTalk_20260509_132113209.jpg",
-    "/gallery/KakaoTalk_20260509_132113209_01.jpg",
-    "/gallery/KakaoTalk_20260509_132113209_02.jpg",
-    "/gallery/KakaoTalk_20260509_132113209_03.jpg",
-    "/gallery/KakaoTalk_20260509_132113209_04.jpg",
+    "/gallery/0.jpg",
+    "/gallery/1.jpg",
+    "/gallery/2.jpg",
+    "/gallery/3.jpg",
+    "/gallery/4.jpg",
+    "/gallery/6.jpg",
+    "/gallery/7.jpg",
+    "/gallery/8.jpg",
+    "/gallery/9.jpg",
+    "/gallery/10.jpg",
+    "/gallery/11.jpg",
+    "/gallery/12.jpg",
+    "/gallery/13.jpg",
+    "/gallery/14.jpg",
+    "/gallery/15.jpg",
+    "/gallery/16.jpg",
+    "/gallery/17.jpg",
+    "/gallery/18.jpg",
+    "/gallery/19.jpg",
+    "/gallery/20.jpg",
+    "/gallery/21.jpg",
+    "/gallery/22.jpg",
   ];
 
   const currentImages = activeTab === "wedding" 
