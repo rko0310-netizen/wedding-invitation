@@ -139,6 +139,7 @@ export default function AccountSection() {
           >
             <div className="px-5 pb-6 space-y-3">
               <AccountItem side="신부" name="윤희원" bank="농협은행" account="815062-56-099595" />
+              <AccountItem side="부친" name="윤영식" bank="농협" account="815063-52-052201" />
               <AccountItem side="모친" name="이금자" bank="농협" account="815062-56-045847" />
             </div>
           </div>
