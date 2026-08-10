@@ -14,14 +14,15 @@ const AccountItem = ({ side, name, bank, account }: AccountProps) => {
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    const copyText = `${bank} ${account}`;
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(account);
+        await navigator.clipboard.writeText(copyText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } else {
         const textArea = document.createElement("textarea");
-        textArea.value = account;
+        textArea.value = copyText;
         document.body.appendChild(textArea);
         textArea.select();
         document.execCommand('copy');
