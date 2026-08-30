@@ -169,7 +169,7 @@ export default function GallerySection() {
     });
     if (!published.ok) throw new Error("publish failed");
 
-    return { id, uploadToken } as { id: string; uploadToken: string };
+    return { fileId: id, uploadToken } as { fileId: string; uploadToken: string };
   };
 
   // 업로드 취소: 진행 중인 전송을 끊고, 이미 올라간 사진도 되돌린다
@@ -200,7 +200,7 @@ export default function GallerySection() {
     setIsUploading(true);
     cancelledRef.current = false;
     const failed: string[] = [];
-    const uploaded: { id: string; uploadToken: string }[] = [];
+    const uploaded: { fileId: string; uploadToken: string }[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
