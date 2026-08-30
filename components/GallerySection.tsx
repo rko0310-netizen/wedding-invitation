@@ -19,6 +19,8 @@ export default function GallerySection() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const cancelledRef = useRef(false);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
 
   const weddingImages = [
     "/gallery/0.jpg",
@@ -142,10 +144,11 @@ export default function GallerySection() {
       }),
     });
     if (!prepared.ok) throw new Error("prepare failed");
-    const { uploadUrl } = await prepared.json();
+    const { uploadUrl, uploadToken } = await prepared.json();
 
     const { id } = await new Promise<{ id: string }>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
       xhr.open("PUT", uploadUrl);
       xhr.upload.onprogress = (ev) => {
         if (ev.lengthComputable) onProgress(ev.loaded / ev.total);
@@ -155,6 +158,7 @@ export default function GallerySection() {
           ? resolve(JSON.parse(xhr.responseText))
           : reject(new Error(`upload failed (${xhr.status})`));
       xhr.onerror = () => reject(new Error("network error"));
+      xhr.onabort = () => reject(new Error("aborted"));
       xhr.send(file);
     });
 
@@ -164,6 +168,19 @@ export default function GallerySection() {
       body: JSON.stringify({ fileId: id }),
     });
     if (!published.ok) throw new Error("publish failed");
+
+    return { id, uploadToken } as { id: string; uploadToken: string };
+  };
+
+  // 업로드 취소: 진행 중인 전송을 끊고, 이미 올라간 사진도 되돌린다
+  const handleCancel = () => {
+    if (!isUploading) {
+      setShowUploadModal(false);
+      return;
+    }
+    if (!confirm("업로드를 취소하시겠습니까?\n\n지금까지 올라간 사진도 모두 삭제됩니다.")) return;
+    cancelledRef.current = true;
+    xhrRef.current?.abort();
   };
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -181,17 +198,46 @@ export default function GallerySection() {
     }
 
     setIsUploading(true);
+    cancelledRef.current = false;
     const failed: string[] = [];
+    const uploaded: { id: string; uploadToken: string }[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
+        if (cancelledRef.current) break;
         try {
-          await uploadOne(files[i], uploaderName, (ratio) =>
-            setUploadProgress(`${i + 1} / ${files.length} 업로드 중... ${Math.round(ratio * 100)}%`)
+          uploaded.push(
+            await uploadOne(files[i], uploaderName, (ratio) =>
+              setUploadProgress(`${i + 1} / ${files.length} 업로드 중... ${Math.round(ratio * 100)}%`)
+            )
           );
         } catch {
-          failed.push(files[i].name);
+          if (!cancelledRef.current) failed.push(files[i].name);
         }
+      }
+
+      if (cancelledRef.current) {
+        setUploadProgress("취소하는 중...");
+        const results = await Promise.all(
+          uploaded.map((u) =>
+            fetch("/api/photos", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(u),
+            })
+              .then((r) => r.ok)
+              .catch(() => false)
+          )
+        );
+        const notDeleted = results.filter((ok) => !ok).length;
+        alert(
+          notDeleted === 0
+            ? "업로드를 취소했습니다. 올라간 사진은 모두 삭제되었습니다."
+            : `업로드를 취소했지만 ${notDeleted}장은 삭제하지 못했습니다.\n혼주에게 알려주시면 정리해 드리겠습니다.`
+        );
+        setShowUploadModal(false);
+        fetchGuestPhotos();
+        return;
       }
 
       if (failed.length === 0) {
@@ -209,6 +255,7 @@ export default function GallerySection() {
     } finally {
       setIsUploading(false);
       setUploadProgress("");
+      xhrRef.current = null;
     }
   };
 
@@ -317,7 +364,7 @@ export default function GallerySection() {
               isUploading ? "text-accent bg-accent/10" : "text-primary/50 bg-secondary/20"
             }`}>
               {isUploading
-                ? "업로드가 진행 중입니다. 완료될 때까지 이 창을 닫거나 화면을 벗어나지 말아주세요."
+                ? "업로드가 진행 중입니다. 완료될 때까지 이 창을 닫거나 화면을 벗어나지 말아주세요. 잘못 올리셨다면 아래 [업로드 취소]를 눌러주세요."
                 : "사진은 원본 그대로 저장되어, 장수와 용량에 따라 시간이 걸릴 수 있습니다. 완료 안내가 나올 때까지 잠시만 기다려 주세요."}
             </p>
             
@@ -346,11 +393,10 @@ export default function GallerySection() {
               <div className="pt-4 flex gap-2">
                 <button 
                   type="button"
-                  onClick={() => setShowUploadModal(false)}
-                  disabled={isUploading}
-                  className="flex-1 py-3 text-xs text-primary/60 hover:bg-secondary/20 rounded-lg transition-colors disabled:opacity-40"
+                  onClick={handleCancel}
+                  className="flex-1 py-3 text-xs text-primary/60 hover:bg-secondary/20 rounded-lg transition-colors"
                 >
-                  취소
+                  {isUploading ? "업로드 취소" : "취소"}
                 </button>
                 <button 
                   type="submit"

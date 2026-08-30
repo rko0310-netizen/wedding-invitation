@@ -68,6 +68,9 @@ export async function POST(req: NextRequest) {
     // Origin을 전달해야 브라우저가 이 세션 URL로 직접 PUT 할 수 있다(CORS)
     const origin = req.headers.get('origin') ?? new URL(req.url).origin;
 
+    // 업로드한 본인만 취소(삭제)할 수 있도록 파일에 비밀 키를 심어둔다
+    const uploadToken = crypto.randomUUID();
+
     const session = await fetch(
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
       {
@@ -82,6 +85,7 @@ export async function POST(req: NextRequest) {
           name: `${Date.now()}-${fileName}`,
           description: uploader_name || '익명의 하객',
           parents: [folderId],
+          appProperties: { uploadToken },
         }),
       }
     );
@@ -89,7 +93,7 @@ export async function POST(req: NextRequest) {
     const uploadUrl = session.headers.get('location');
     if (!uploadUrl) throw new Error(`업로드 세션 발급 실패 (${session.status})`);
 
-    return NextResponse.json({ uploadUrl });
+    return NextResponse.json({ uploadUrl, uploadToken });
   } catch (error: any) {
     console.error('Upload URL error:', error?.message ?? error);
     return NextResponse.json({ error: '업로드 준비 중 오류가 발생했습니다.' }, { status: 500 });
@@ -115,5 +119,38 @@ export async function PATCH(req: NextRequest) {
   } catch (error: any) {
     console.error('Publish error:', error?.message ?? error);
     return NextResponse.json({ error: '사진 공개 설정에 실패했습니다.' }, { status: 500 });
+  }
+}
+
+// 업로드를 취소한 하객이 방금 올린 사진을 되돌린다.
+// 업로드 시 발급한 비밀 키가 일치하는 파일만 삭제하므로 남의 사진은 지울 수 없다.
+export async function DELETE(req: NextRequest) {
+  try {
+    const { drive, folderId } = getDriveClient();
+    const { fileId, uploadToken } = await req.json();
+
+    if (!fileId || !uploadToken) {
+      return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
+    }
+
+    const file = await drive.files.get({
+      fileId,
+      fields: 'appProperties, parents',
+    });
+
+    const matches =
+      file.data.appProperties?.uploadToken === uploadToken &&
+      file.data.parents?.includes(folderId);
+
+    if (!matches) {
+      return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
+    }
+
+    await drive.files.delete({ fileId });
+
+    return NextResponse.json({ ok: true });
+  } catch (error: any) {
+    console.error('Delete error:', error?.message ?? error);
+    return NextResponse.json({ error: '사진 삭제에 실패했습니다.' }, { status: 500 });
   }
 }
