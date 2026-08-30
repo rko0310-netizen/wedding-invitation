@@ -125,34 +125,46 @@ export default function GallerySection() {
     }
   };
 
-  const compressImage = (file: File): Promise<File> =>
-    new Promise((resolve) => {
-      const img = document.createElement("img");
-      const url = URL.createObjectURL(file);
-
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-        const MAX = 1920;
-        let { width, height } = img;
-        if (width > MAX || height > MAX) {
-          if (width > height) { height = Math.round((height * MAX) / width); width = MAX; }
-          else { width = Math.round((width * MAX) / height); height = MAX; }
-        }
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        canvas.getContext("2d")!.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => resolve(blob
-            ? new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
-            : file
-          ),
-          "image/jpeg", 0.85
-        );
-      };
-      img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
-      img.src = url;
+  // 사진 1장을 구글 드라이브로 직접 올린다(서버를 거치지 않아 원본 그대로 저장된다)
+  const uploadOne = async (
+    file: File,
+    uploaderName: string,
+    onProgress: (ratio: number) => void
+  ) => {
+    const prepared = await fetch("/api/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fileName: file.name,
+        mimeType: file.type,
+        size: file.size,
+        uploader_name: uploaderName,
+      }),
     });
+    if (!prepared.ok) throw new Error("prepare failed");
+    const { uploadUrl } = await prepared.json();
+
+    const { id } = await new Promise<{ id: string }>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl);
+      xhr.upload.onprogress = (ev) => {
+        if (ev.lengthComputable) onProgress(ev.loaded / ev.total);
+      };
+      xhr.onload = () =>
+        xhr.status >= 200 && xhr.status < 300
+          ? resolve(JSON.parse(xhr.responseText))
+          : reject(new Error(`upload failed (${xhr.status})`));
+      xhr.onerror = () => reject(new Error("network error"));
+      xhr.send(file);
+    });
+
+    const published = await fetch("/api/photos", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fileId: id }),
+    });
+    if (!published.ok) throw new Error("publish failed");
+  };
 
   const handleUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -169,30 +181,30 @@ export default function GallerySection() {
     }
 
     setIsUploading(true);
-    let failCount = 0;
+    const failed: string[] = [];
 
     try {
       for (let i = 0; i < files.length; i++) {
-        setUploadProgress(`${i + 1} / ${files.length} 업로드 중...`);
         try {
-          const compressed = await compressImage(files[i]);
-          const formData = new FormData();
-          formData.append("file", compressed);
-          formData.append("uploader_name", uploaderName);
-
-          const res = await fetch("/api/photos", { method: "POST", body: formData });
-          if (!res.ok) failCount++;
+          await uploadOne(files[i], uploaderName, (ratio) =>
+            setUploadProgress(`${i + 1} / ${files.length} 업로드 중... ${Math.round(ratio * 100)}%`)
+          );
         } catch {
-          failCount++;
+          failed.push(files[i].name);
         }
       }
 
-      if (failCount === 0) {
+      if (failed.length === 0) {
         alert(`${files.length}장이 성공적으로 업로드되었습니다!`);
       } else {
-        alert(`${files.length - failCount}장 성공, ${failCount}장 실패했습니다.`);
+        alert(
+          `${files.length - failed.length}장 성공, ${failed.length}장 실패했습니다.\n\n` +
+          `실패한 사진: ${failed.join(", ")}\n\n` +
+          `JPG, PNG, WEBP 형식만 올릴 수 있습니다. 아이폰 사진(HEIC)이라면 설정 > 카메라 > 포맷 을 "높은 호환성"으로 바꾸신 뒤 다시 촬영해 주세요.`
+        );
       }
       setShowUploadModal(false);
+      setActiveTab("guests");
       fetchGuestPhotos();
     } finally {
       setIsUploading(false);
