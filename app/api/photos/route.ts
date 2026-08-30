@@ -52,7 +52,11 @@ export async function POST(req: NextRequest) {
   try {
     const { auth, folderId } = getDriveClient();
 
-    const { fileName, mimeType, size, uploader_name } = await req.json();
+    const { fileName, mimeType, size, uploader_name, batchToken } = await req.json();
+
+    if (typeof batchToken !== 'string' || !/^[0-9a-zA-Z-]{16,64}$/.test(batchToken)) {
+      return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
+    }
 
     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp'];
     if (!mimeType || !allowedMimeTypes.includes(mimeType)) {
@@ -68,9 +72,6 @@ export async function POST(req: NextRequest) {
     // Origin을 전달해야 브라우저가 이 세션 URL로 직접 PUT 할 수 있다(CORS)
     const origin = req.headers.get('origin') ?? new URL(req.url).origin;
 
-    // 업로드한 본인만 취소(삭제)할 수 있도록 파일에 비밀 키를 심어둔다
-    const uploadToken = crypto.randomUUID();
-
     const session = await fetch(
       'https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id',
       {
@@ -85,7 +86,7 @@ export async function POST(req: NextRequest) {
           name: `${Date.now()}-${fileName}`,
           description: uploader_name || '익명의 하객',
           parents: [folderId],
-          appProperties: { uploadToken },
+          appProperties: { batchToken },
         }),
       }
     );
@@ -93,7 +94,7 @@ export async function POST(req: NextRequest) {
     const uploadUrl = session.headers.get('location');
     if (!uploadUrl) throw new Error(`업로드 세션 발급 실패 (${session.status})`);
 
-    return NextResponse.json({ uploadUrl, uploadToken });
+    return NextResponse.json({ uploadUrl });
   } catch (error: any) {
     console.error('Upload URL error:', error?.message ?? error);
     return NextResponse.json({ error: '업로드 준비 중 오류가 발생했습니다.' }, { status: 500 });
@@ -123,38 +124,35 @@ export async function PATCH(req: NextRequest) {
 }
 
 // 업로드를 취소한 하객이 방금 올린 사진을 되돌린다.
-// 업로드 시 발급한 비밀 키가 일치하는 파일만 삭제하므로 남의 사진은 지울 수 없다.
+// 같은 묶음 표식이 달린 파일을 모두 찾아 지우므로, 취소 직전에 전송이 끝나
+// 뒤늦게 만들어진 파일까지 함께 정리된다. 표식을 아는 본인만 지울 수 있다.
 export async function DELETE(req: NextRequest) {
   try {
     const { drive, folderId } = getDriveClient();
-    const { fileId, uploadToken } = await req.json();
+    const { batchToken } = await req.json();
 
-    if (!fileId || !uploadToken) {
-      console.error('Delete rejected: 요청 필드 누락', { hasFileId: !!fileId, hasUploadToken: !!uploadToken });
+    if (typeof batchToken !== 'string' || !/^[0-9a-zA-Z-]{16,64}$/.test(batchToken)) {
       return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
     }
 
-    const file = await drive.files.get({
-      fileId,
-      fields: 'appProperties, parents',
+    const found = await drive.files.list({
+      q: `'${folderId}' in parents and trashed = false and appProperties has { key='batchToken' and value='${batchToken}' }`,
+      fields: 'files(id)',
+      pageSize: 100,
     });
 
-    const matches =
-      file.data.appProperties?.uploadToken === uploadToken &&
-      file.data.parents?.includes(folderId);
+    const files = found.data.files || [];
 
-    if (!matches) {
-      console.error('Delete rejected: 키 불일치', {
-        파일에_키가_저장됨: !!file.data.appProperties?.uploadToken,
-        키_일치: file.data.appProperties?.uploadToken === uploadToken,
-        폴더_소속: !!file.data.parents?.includes(folderId),
-      });
-      return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
-    }
+    const results = await Promise.all(
+      files.map(f =>
+        drive.files.delete({ fileId: f.id! }).then(() => true).catch(() => false)
+      )
+    );
 
-    await drive.files.delete({ fileId });
+    const deleted = results.filter(Boolean).length;
+    console.error(`Cancel: ${files.length}건 중 ${deleted}건 삭제`);
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ deleted, found: files.length });
   } catch (error: any) {
     console.error('Delete error:', error?.message ?? error);
     return NextResponse.json({ error: '사진 삭제에 실패했습니다.' }, { status: 500 });

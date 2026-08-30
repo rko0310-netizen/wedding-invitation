@@ -131,6 +131,7 @@ export default function GallerySection() {
   const uploadOne = async (
     file: File,
     uploaderName: string,
+    batchToken: string,
     onProgress: (ratio: number) => void
   ) => {
     const prepared = await fetch("/api/photos", {
@@ -141,10 +142,11 @@ export default function GallerySection() {
         mimeType: file.type,
         size: file.size,
         uploader_name: uploaderName,
+        batchToken,
       }),
     });
     if (!prepared.ok) throw new Error("prepare failed");
-    const { uploadUrl, uploadToken } = await prepared.json();
+    const { uploadUrl } = await prepared.json();
 
     const { id } = await new Promise<{ id: string }>((resolve, reject) => {
       const xhr = new XMLHttpRequest();
@@ -168,8 +170,6 @@ export default function GallerySection() {
       body: JSON.stringify({ fileId: id }),
     });
     if (!published.ok) throw new Error("publish failed");
-
-    return { fileId: id, uploadToken } as { fileId: string; uploadToken: string };
   };
 
   // 업로드 취소: 진행 중인 전송을 끊고, 이미 올라간 사진도 되돌린다
@@ -200,16 +200,16 @@ export default function GallerySection() {
     setIsUploading(true);
     cancelledRef.current = false;
     const failed: string[] = [];
-    const uploaded: { fileId: string; uploadToken: string }[] = [];
+    const batchToken =
+      globalThis.crypto?.randomUUID?.() ??
+      `b-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
 
     try {
       for (let i = 0; i < files.length; i++) {
         if (cancelledRef.current) break;
         try {
-          uploaded.push(
-            await uploadOne(files[i], uploaderName, (ratio) =>
-              setUploadProgress(`${i + 1} / ${files.length} 업로드 중... ${Math.round(ratio * 100)}%`)
-            )
+          await uploadOne(files[i], uploaderName, batchToken, (ratio) =>
+            setUploadProgress(`${i + 1} / ${files.length} 업로드 중... ${Math.round(ratio * 100)}%`)
           );
         } catch {
           if (!cancelledRef.current) failed.push(files[i].name);
@@ -218,22 +218,18 @@ export default function GallerySection() {
 
       if (cancelledRef.current) {
         setUploadProgress("취소하는 중...");
-        const results = await Promise.all(
-          uploaded.map((u) =>
-            fetch("/api/photos", {
-              method: "DELETE",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(u),
-            })
-              .then((r) => r.ok)
-              .catch(() => false)
-          )
-        );
-        const notDeleted = results.filter((ok) => !ok).length;
+        // 전송을 끊은 직후에도 구글이 파일을 마저 만들 수 있어 잠시 기다렸다 지운다
+        await new Promise((r) => setTimeout(r, 1500));
+        const res = await fetch("/api/photos", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ batchToken }),
+        }).catch(() => null);
+        const result = res && res.ok ? await res.json() : null;
         alert(
-          notDeleted === 0
+          result && result.deleted === result.found
             ? "업로드를 취소했습니다. 올라간 사진은 모두 삭제되었습니다."
-            : `업로드를 취소했지만 ${notDeleted}장은 삭제하지 못했습니다.\n혼주에게 알려주시면 정리해 드리겠습니다.`
+            : "업로드를 취소했습니다. 다만 일부 사진이 남았을 수 있으니 갤러리를 확인해 주세요."
         );
         setShowUploadModal(false);
         fetchGuestPhotos();
