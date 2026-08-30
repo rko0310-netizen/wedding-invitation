@@ -306,12 +306,20 @@ export default function GallerySection() {
 
       {/* 사진 업로드 모달 */}
       {showUploadModal && (
-        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => setShowUploadModal(false)}>
+        <div className="fixed inset-0 z-[120] bg-black/60 flex items-center justify-center p-6 backdrop-blur-sm" onClick={() => { if (!isUploading) setShowUploadModal(false); }}>
           <div className="bg-white w-full max-w-sm rounded-2xl p-8 space-y-6 animate-in fade-in zoom-in duration-300" onClick={(e) => e.stopPropagation()}>
             <div className="text-center space-y-2">
               <h3 className="text-lg font-medium text-primary">하객 스냅 올리기</h3>
               <p className="text-[10px] text-primary/60">소중한 추억을 직접 남겨주세요.</p>
             </div>
+
+            <p className={`text-[10px] leading-relaxed text-center break-keep rounded-lg py-3 px-4 ${
+              isUploading ? "text-accent bg-accent/10" : "text-primary/50 bg-secondary/20"
+            }`}>
+              {isUploading
+                ? "업로드가 진행 중입니다. 완료될 때까지 이 창을 닫거나 화면을 벗어나지 말아주세요."
+                : "사진은 원본 그대로 저장되어, 장수와 용량에 따라 시간이 걸릴 수 있습니다. 완료 안내가 나올 때까지 잠시만 기다려 주세요."}
+            </p>
             
             <form onSubmit={handleUpload} className="space-y-4">
               <div className="space-y-1">
@@ -339,7 +347,8 @@ export default function GallerySection() {
                 <button 
                   type="button"
                   onClick={() => setShowUploadModal(false)}
-                  className="flex-1 py-3 text-xs text-primary/60 hover:bg-secondary/20 rounded-lg transition-colors"
+                  disabled={isUploading}
+                  className="flex-1 py-3 text-xs text-primary/60 hover:bg-secondary/20 rounded-lg transition-colors disabled:opacity-40"
                 >
                   취소
                 </button>
