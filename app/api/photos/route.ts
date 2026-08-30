@@ -130,6 +130,7 @@ export async function DELETE(req: NextRequest) {
     const { fileId, uploadToken } = await req.json();
 
     if (!fileId || !uploadToken) {
+      console.error('Delete rejected: 요청 필드 누락', { hasFileId: !!fileId, hasUploadToken: !!uploadToken });
       return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 });
     }
 
@@ -143,6 +144,11 @@ export async function DELETE(req: NextRequest) {
       file.data.parents?.includes(folderId);
 
     if (!matches) {
+      console.error('Delete rejected: 키 불일치', {
+        파일에_키가_저장됨: !!file.data.appProperties?.uploadToken,
+        키_일치: file.data.appProperties?.uploadToken === uploadToken,
+        폴더_소속: !!file.data.parents?.includes(folderId),
+      });
       return NextResponse.json({ error: '삭제 권한이 없습니다.' }, { status: 403 });
     }
 
