@@ -27,7 +27,7 @@ export default function LocationSection() {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-xl font-medium text-primary">{name}</h3>
+        <h3 className="text-xl font-medium text-primary">{name} 피에스타홀</h3>
         <p className="text-foreground/70 font-light text-sm">{address}</p>
       </div>
 

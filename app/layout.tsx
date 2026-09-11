@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "정훈 & 희원 결혼식에 초대합니다",
-    description: "2026년 9월 12일 토요일 오후 1시 30분, 더엠컨벤션",
+    description: "2026년 9월 12일 토요일 오후 1시 30분, 더엠컨벤션 피에스타홀",
     type: "website",
     locale: "ko_KR",
     images: [
